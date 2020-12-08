@@ -6,4 +6,4 @@ require('./data/data.csv')
 
 const CSVDocument = require('./util/factory')
 
-CSVDocument('data/data.csv').init().build()
+CSVDocument('data/data.csv', 'data/rings.json').init().build()

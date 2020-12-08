@@ -49,7 +49,7 @@ const plugins = [
   }),
   new CopyPlugin({
     patterns: [
-      { from: 'src/data/ring_descriptions.json', to: 'data' }
+      { from: 'src/data/rings.json', to: 'data' }
     ]
   })
 ]

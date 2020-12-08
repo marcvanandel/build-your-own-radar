@@ -10,10 +10,6 @@ const AutoComplete = require('../util/autoComplete')
 const MIN_BLIP_WIDTH = 12
 const ANIMATION_DURATION = 1000
 
-let RING_DESCRIPTIONS = {
-  key: 'value, loaded from data/ring_descriptions.json'
-}
-
 const Radar = function (size, radar) {
   var svg, radarElement, quadrantButtons, buttonsGroup, header, alternativeDiv
 
@@ -135,8 +131,7 @@ const Radar = function (size, radar) {
 
   function addRing (ring, order) {
     var table = d3.select('.quadrant-table.' + order)
-    var description = RING_DESCRIPTIONS[ring.toLowerCase()] || ring
-    table.append('h3').text(ring).attr('title', description)
+    table.append('h3').text(ring.name()).attr('title', ring.desc())
     return table.append('ul')
   }
 
@@ -196,7 +191,7 @@ const Radar = function (size, radar) {
       }, 0)
       chance = new Chance(Math.PI * sumRing * ring.name().length * sumQuadrant * quadrant.name().length)
 
-      var ringList = addRing(ring.name(), order)
+      var ringList = addRing(ring, order)
       var allBlipCoordinatesInRing = []
 
       ringBlips.forEach(function (blip) {
@@ -571,12 +566,8 @@ const Radar = function (size, radar) {
   }
 
   self.init = function () {
-    return d3.json('../data/ring_descriptions.json').then(function(data) {
-      RING_DESCRIPTIONS = data
-    }).then(function() {
-      radarElement = d3.select('body').append('div').attr('id', 'radar')
-      return self
-    })
+    radarElement = d3.select('body').append('div').attr('id', 'radar')
+    return self
   }
 
   function constructSheetUrl (sheetName) {
