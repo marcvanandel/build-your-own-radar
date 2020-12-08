@@ -23,7 +23,14 @@ const Sheet = require('./sheet')
 const ExceptionMessages = require('./exceptionMessages')
 const GoogleAuth = require('./googleAuth')
 
-const plotRadar = function (title, blips, currentRadarName, alternativeRadars) {
+// RING_DESCRIPTIONS = {
+//   key: {
+//     order: 1,
+//     desc: 'loaded from data/rings.json'
+//   }
+// }
+
+const plotRadar = function (title, blips, currentRadarName, alternativeRadars, ringDescriptions) {
   if (title.endsWith('.csv')) {
     title = title.substring(0, title.length - 4)
   }
@@ -38,7 +45,8 @@ const plotRadar = function (title, blips, currentRadarName, alternativeRadars) {
     if (i === maxRings) {
       throw new MalformedDataError(ExceptionMessages.TOO_MANY_RINGS)
     }
-    ringMap[ringName] = new Ring(ringName, i)
+    ring = ringDescriptions[ringName.toLowerCase()] || { desc: ringName, order: i}
+    ringMap[ringName] = new Ring(ringName, ring.desc, ring.order)
   })
 
   var quadrants = {}
@@ -66,7 +74,7 @@ const plotRadar = function (title, blips, currentRadarName, alternativeRadars) {
 
   var size = 620
 
-  new GraphingRadar(size, radar).init().then(function (radar) { return radar.plot() })
+  new GraphingRadar(size, radar).init().plot()
 }
 
 const GoogleSheet = function (sheetReference, sheetName) {
@@ -152,14 +160,20 @@ const GoogleSheet = function (sheetReference, sheetName) {
   return self
 }
 
-const CSVDocument = function (url) {
+const CSVDocument = function (dataUrl, ringsUrl) {
   var self = {}
+  var rings = {}
 
   self.build = function () {
-    d3.csv(url).then(createBlips)
+    d3.json(ringsUrl).then(function(data) {
+      rings = data
+      return rings
+    }).then(function (rings) {
+      d3.csv(dataUrl).then(function (data) { createBlips(data, rings) })
+    })
   }
 
-  var createBlips = function (data) {
+  var createBlips = function (data, ringDescriptions) {
     try {
       var columnNames = data.columns
       delete data.columns
@@ -167,7 +181,7 @@ const CSVDocument = function (url) {
       contentValidator.verifyContent()
       contentValidator.verifyHeaders()
       var blips = _.map(data, new InputSanitizer().sanitize)
-      plotRadar(FileName(url), blips, 'CSV File', [])
+      plotRadar(FileName(dataUrl), blips, 'CSV File', [], ringDescriptions || {})
     } catch (exception) {
       plotErrorMessage(exception)
     }
